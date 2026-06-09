@@ -1,9 +1,14 @@
 type NoteMetadataProps = {
   tags: string[];
   pageLinks: string[];
+  onOpenPageLink: (pageTitle: string) => void;
 };
 
-export function NoteMetadata({ tags, pageLinks }: NoteMetadataProps) {
+export function NoteMetadata({
+  tags,
+  pageLinks,
+  onOpenPageLink,
+}: NoteMetadataProps) {
   if (tags.length === 0 && pageLinks.length === 0) {
     return null;
   }
@@ -26,12 +31,13 @@ export function NoteMetadata({ tags, pageLinks }: NoteMetadataProps) {
       {pageLinks.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {pageLinks.map((pageLink) => (
-            <span
+            <button
               key={pageLink}
-              className="rounded-md bg-neutral-800 px-2 py-1 text-xs text-neutral-300"
+              onClick={() => onOpenPageLink(pageLink)}
+              className="rounded-md bg-neutral-800 px-2 py-1 text-xs text-neutral-300 hover:bg-neutral-700"
             >
               [[{pageLink}]]
-            </span>
+            </button>
           ))}
         </div>
       )}

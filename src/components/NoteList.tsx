@@ -1,4 +1,4 @@
-import { getNotePreview } from "@/lib/note-utils";
+import { formatUpdatedDate, getNotePreview } from "@/lib/note-utils";
 import type { Note } from "@/types/note";
 
 type NoteListProps = {
@@ -25,8 +25,11 @@ export function NoteList({
           }`}
         >
           <div className="truncate font-medium">{note.title}</div>
-          <div className="truncate text-xs text-neutral-400">
+          <div className="mt-1 truncate text-xs text-neutral-400">
             {getNotePreview(note.content)}
+          </div>
+          <div className="mt-1 text-xs text-neutral-500">
+            {formatUpdatedDate(note.updatedAt)}
           </div>
         </button>
       ))}
