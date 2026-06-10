@@ -1,4 +1,4 @@
-import type { User } from "@supabase/supabase-js";
+import type { Session, User } from "@supabase/supabase-js";
 import { supabase, assertSupabaseConfig } from "@/lib/supabase";
 
 export async function getCurrentUser(): Promise<User | null> {
@@ -20,7 +20,7 @@ export async function getCurrentUser(): Promise<User | null> {
 export async function signUpWithEmail(
   email: string,
   password: string
-): Promise<User | null> {
+): Promise<{ user: User | null; session: Session | null }> {
   assertSupabaseConfig();
 
   const { data, error } = await supabase.auth.signUp({
@@ -32,7 +32,10 @@ export async function signUpWithEmail(
     throw error;
   }
 
-  return data.user;
+  return {
+    user: data.user,
+    session: data.session,
+  };
 }
 
 export async function signInWithEmail(

@@ -292,9 +292,11 @@ export default function Home() {
   }, [pendingNoteSave, hasLoadedNotes, user]);
 
   useEffect(() => {
+    if (!user) return;
+
     function handleKeyDown(event: KeyboardEvent) {
       const isShortcut = event.altKey && !event.ctrlKey && !event.metaKey;
-      const key = event.key.toLowerCase();
+      const key = typeof event.key === "string" ? event.key.toLowerCase() : "";
 
       if (!isShortcut) return;
 
@@ -314,7 +316,7 @@ export default function Home() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [createNote, openDailyNote]);
+  }, [createNote, openDailyNote, user]);
 
   if (isCheckingAuth) {
     return (

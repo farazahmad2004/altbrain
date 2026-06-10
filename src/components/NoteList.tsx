@@ -18,13 +18,15 @@ export function NoteList({
         <button
           key={note.id}
           onClick={() => onSelectNote(note.id)}
-          className={`w-full rounded-lg px-3 py-2 text-left ${
+          className={`w-full rounded-lg border px-3 py-2.5 text-left ${
             note.id === activeNoteId
-              ? "bg-neutral-700"
-              : "bg-neutral-800 hover:bg-neutral-700"
+              ? "border-neutral-500 bg-neutral-800"
+              : "border-neutral-800 bg-neutral-950 hover:bg-neutral-800"
           }`}
         >
-          <div className="truncate font-medium">{note.title}</div>
+          <div className="truncate text-sm font-medium text-neutral-100">
+            {note.title}
+          </div>
           <div className="mt-1 truncate text-xs text-neutral-400">
             {getNotePreview(note.content)}
           </div>

@@ -24,6 +24,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -33,11 +34,17 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
     try {
       if (mode === "login") {
         await signInWithEmail(email, password);
+        onAuthSuccess();
       } else {
-        await signUpWithEmail(email, password);
-      }
+        const result = await signUpWithEmail(email, password);
 
-      onAuthSuccess();
+        if (!result.session) {
+          setShowEmailConfirmation(true);
+          return;
+        }
+
+        onAuthSuccess();
+      }
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
     } finally {
@@ -45,20 +52,51 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
     }
   }
 
+  if (showEmailConfirmation) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-neutral-950 p-6 text-neutral-100">
+        <section className="w-full max-w-sm rounded-lg border border-neutral-800 bg-neutral-900/70 p-6 text-center">
+          <h1 className="text-2xl font-bold">Check your email</h1>
+          <p className="mt-3 text-sm leading-6 text-neutral-400">
+            We sent a confirmation link to your email. Confirm your account,
+            then return here and log in.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowEmailConfirmation(false);
+              setMode("login");
+              setPassword("");
+              setErrorMessage(null);
+            }}
+            className="mt-6 w-full rounded-lg bg-white px-4 py-2 font-medium text-neutral-950 hover:bg-neutral-200"
+          >
+            Back to login
+          </button>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-neutral-950 p-6 text-neutral-100">
-      <section className="w-full max-w-sm">
-        <div className="mb-8 text-center">
+      <section className="w-full max-w-sm rounded-lg border border-neutral-800 bg-neutral-900/70 p-6">
+        <div className="mb-7 text-center">
           <h1 className="text-3xl font-bold">AltBrain</h1>
           <p className="mt-2 text-sm text-neutral-400">
-            Markdown-first knowledge, synced to your account.
+            Capture notes, connect ideas, and build your personal AI knowledge
+            base.
           </p>
         </div>
 
         <div className="mb-4 grid grid-cols-2 rounded-lg border border-neutral-800 p-1">
           <button
             type="button"
-            onClick={() => setMode("login")}
+            onClick={() => {
+              setMode("login");
+              setErrorMessage(null);
+            }}
             className={`rounded-md px-3 py-2 text-sm ${
               mode === "login"
                 ? "bg-neutral-700 text-white"
@@ -70,7 +108,10 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
 
           <button
             type="button"
-            onClick={() => setMode("signup")}
+            onClick={() => {
+              setMode("signup");
+              setErrorMessage(null);
+            }}
             className={`rounded-md px-3 py-2 text-sm ${
               mode === "signup"
                 ? "bg-neutral-700 text-white"

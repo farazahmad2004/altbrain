@@ -36,14 +36,18 @@ export function Sidebar({
 }: SidebarProps) {
   return (
     <aside className="w-full border-b border-neutral-800 bg-neutral-900 p-4 md:w-72 md:border-b-0 md:border-r">
-      <div className="mb-6">
+      <div className="mb-5">
         <h1 className="text-2xl font-bold">AltBrain</h1>
         <p className="text-sm text-neutral-400">
           Markdown-first AI knowledge base
         </p>
       </div>
 
-      <div className="mb-4 rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2">
+      <div className="mb-5 rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-3">
+        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+          Account
+        </div>
+
         {userEmail && (
           <div className="mb-2 truncate text-xs text-neutral-400">
             {userEmail}
@@ -56,6 +60,10 @@ export function Sidebar({
         >
           Logout
         </button>
+      </div>
+
+      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+        Actions
       </div>
 
       <div className="mb-4 grid grid-cols-2 gap-2">
@@ -115,6 +123,10 @@ export function Sidebar({
           </div>
         </div>
       )}
+
+      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+        Notes
+      </div>
 
       {filteredNotes.length > 0 ? (
         <NoteList
