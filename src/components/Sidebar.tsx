@@ -8,12 +8,14 @@ type SidebarProps = {
   searchQuery: string;
   tags: string[];
   activeTag: string | null;
+  userEmail?: string;
   onSearchChange: (query: string) => void;
   onCreateNote: () => void;
   onOpenDailyNote: () => void;
   onSelectNote: (noteId: string) => void;
   onSelectTag: (tag: string) => void;
   onClearTag: () => void;
+  onLogout: () => void;
 };
 
 export function Sidebar({
@@ -23,12 +25,14 @@ export function Sidebar({
   searchQuery,
   tags,
   activeTag,
+  userEmail,
   onSearchChange,
   onCreateNote,
   onOpenDailyNote,
   onSelectNote,
   onSelectTag,
   onClearTag,
+  onLogout,
 }: SidebarProps) {
   return (
     <aside className="w-full border-b border-neutral-800 bg-neutral-900 p-4 md:w-72 md:border-b-0 md:border-r">
@@ -37,6 +41,21 @@ export function Sidebar({
         <p className="text-sm text-neutral-400">
           Markdown-first AI knowledge base
         </p>
+      </div>
+
+      <div className="mb-4 rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2">
+        {userEmail && (
+          <div className="mb-2 truncate text-xs text-neutral-400">
+            {userEmail}
+          </div>
+        )}
+
+        <button
+          onClick={onLogout}
+          className="text-sm text-neutral-300 hover:text-white"
+        >
+          Logout
+        </button>
       </div>
 
       <div className="mb-4 grid grid-cols-2 gap-2">

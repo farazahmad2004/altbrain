@@ -50,7 +50,7 @@ export function createNoteWithTitle(title: string, content?: string): Note {
 
 export function createStarterNote(): Note {
   return {
-    id: "1",
+    id: crypto.randomUUID(),
     title: "Welcome to AltBrain",
     content: `# Welcome to AltBrain
 
@@ -76,7 +76,7 @@ export function createStarterNotes(): Note[] {
 
   return [
     {
-      id: "1",
+      id: crypto.randomUUID(),
       title: "Welcome to AltBrain",
       content: `# Welcome to AltBrain
 
@@ -89,7 +89,7 @@ Use inline tags like #welcome and #knowledge-base to organize notes.
       updatedAt: now,
     },
     {
-      id: "2",
+      id: crypto.randomUUID(),
       title: "AI Knowledge Base Roadmap",
       content: `# AI Knowledge Base Roadmap
 
@@ -105,7 +105,7 @@ AltBrain starts local-first before adding sync or AI.
       updatedAt: now,
     },
     {
-      id: "3",
+      id: crypto.randomUUID(),
       title: "Cloud Notes Example",
       content: `# Cloud Notes Example
 

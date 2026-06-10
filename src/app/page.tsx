@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { AuthScreen } from "@/components/AuthScreen";
 import { Backlinks } from "@/components/Backlinks";
 import { EmptyState } from "@/components/EmptyState";
 import { MarkdownPreview } from "@/components/MarkdownPreview";
@@ -21,16 +22,45 @@ import {
   getTodayTitle,
   noteHasTag,
 } from "@/lib/note-utils";
-import { loadNotesFromStorage, saveNotesToStorage } from "@/lib/storage";
+import {
+  createNoteInDb,
+  deleteNoteFromDb,
+  fetchNotes,
+  updateNoteInDb,
+} from "@/lib/notes-api";
+import { getCurrentUser, signOut } from "@/lib/auth-api";
+import { supabase } from "@/lib/supabase";
 import type { Note, ViewMode } from "@/types/note";
+import type { User } from "@supabase/supabase-js";
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "Something went wrong while syncing notes.";
+}
+
+function getActiveIdFromNotes(notes: Note[], preferredNoteId: string | null) {
+  if (preferredNoteId && notes.some((note) => note.id === preferredNoteId)) {
+    return preferredNoteId;
+  }
+
+  return notes[0]?.id ?? "";
+}
 
 export default function Home() {
-  const [notes, setNotes] = useState<Note[]>(() => createStarterNotes());
-  const [activeNoteId, setActiveNoteId] = useState("1");
+  const [user, setUser] = useState<User | null>(null);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [activeNoteId, setActiveNoteId] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("editor");
-  const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
+  const [isLoadingNotes, setIsLoadingNotes] = useState(true);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [hasLoadedNotes, setHasLoadedNotes] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [pendingNoteSave, setPendingNoteSave] = useState<Note | null>(null);
 
   const activeNote = notes.find((note) => note.id === activeNoteId);
   const sortedNotes = [...notes].sort(
@@ -56,6 +86,8 @@ export default function Home() {
     : [];
 
   const openOrCreatePageLink = useCallback((pageTitle: string) => {
+    if (!user) return;
+
     const existingNote = findNoteByTitle(notes, pageTitle);
 
     if (existingNote) {
@@ -67,9 +99,14 @@ export default function Home() {
 
     setNotes((prevNotes) => [newNote, ...prevNotes]);
     setActiveNoteId(newNote.id);
-  }, [notes]);
+    createNoteInDb(newNote, user.id).catch((error: unknown) => {
+      setSyncError(getErrorMessage(error));
+    });
+  }, [notes, user]);
 
   const openDailyNote = useCallback(() => {
+    if (!user) return;
+
     const todayTitle = getTodayTitle();
     const existingNote = findNoteByTitle(notes, todayTitle);
 
@@ -82,29 +119,38 @@ export default function Home() {
 
     setNotes((prevNotes) => [newNote, ...prevNotes]);
     setActiveNoteId(newNote.id);
-  }, [notes]);
+    createNoteInDb(newNote, user.id).catch((error: unknown) => {
+      setSyncError(getErrorMessage(error));
+    });
+  }, [notes, user]);
 
   const createNote = useCallback(() => {
+    if (!user) return;
+
     const newNote = createEmptyNote();
 
     setNotes((prevNotes) => [newNote, ...prevNotes]);
     setActiveNoteId(newNote.id);
-  }, []);
+    createNoteInDb(newNote, user.id).catch((error: unknown) => {
+      setSyncError(getErrorMessage(error));
+    });
+  }, [user]);
 
   function updateActiveNote(field: "title" | "content", value: string) {
     if (!activeNote) return;
 
+    const updatedNote = {
+      ...activeNote,
+      [field]: value,
+      updatedAt: new Date().toISOString(),
+    };
+
     setNotes((prevNotes) =>
       prevNotes.map((note) =>
-        note.id === activeNote.id
-          ? {
-              ...note,
-              [field]: value,
-              updatedAt: new Date().toISOString(),
-            }
-          : note
+        note.id === activeNote.id ? updatedNote : note
       )
     );
+    setPendingNoteSave(updatedNote);
   }
 
   function deleteActiveNote() {
@@ -118,36 +164,132 @@ export default function Home() {
     } else {
       setActiveNoteId("");
     }
+
+    deleteNoteFromDb(activeNote.id).catch((error: unknown) => {
+      setSyncError(getErrorMessage(error));
+    });
   }
 
-  /* eslint-disable react-hooks/set-state-in-effect */
+  async function handleLogout() {
+    try {
+      await signOut();
+      setUser(null);
+      setNotes([]);
+      setActiveNoteId("");
+      setPendingNoteSave(null);
+      setHasLoadedNotes(false);
+      setSyncError(null);
+    } catch (error) {
+      setSyncError(getErrorMessage(error));
+    }
+  }
+
   useEffect(() => {
-    const storedData = loadNotesFromStorage();
+    let isMounted = true;
 
-    if (storedData.notes) {
-      setNotes(storedData.notes);
+    getCurrentUser()
+      .then((currentUser) => {
+        if (!isMounted) return;
 
-      if (
-        storedData.activeNoteId &&
-        storedData.notes.some((note) => note.id === storedData.activeNoteId)
-      ) {
-        setActiveNoteId(storedData.activeNoteId);
-      } else if (storedData.notes.length > 0) {
-        setActiveNoteId(storedData.notes[0].id);
-      } else {
+        setUser(currentUser);
+
+        if (!currentUser) {
+          setIsLoadingNotes(false);
+        }
+      })
+      .catch((error: unknown) => {
+        if (!isMounted) return;
+
+        setSyncError(getErrorMessage(error));
+      })
+      .finally(() => {
+        if (!isMounted) return;
+
+        setIsCheckingAuth(false);
+      });
+
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      const nextUser = session?.user ?? null;
+
+      setUser(nextUser);
+      setNotes([]);
+      setActiveNoteId("");
+      setPendingNoteSave(null);
+      setHasLoadedNotes(false);
+      setIsLoadingNotes(Boolean(nextUser));
+      setSyncError(null);
+    });
+
+    return () => {
+      isMounted = false;
+      data.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isCheckingAuth || !user) return;
+
+    let isMounted = true;
+    const userId = user.id;
+
+    async function loadUserNotes() {
+      setIsLoadingNotes(true);
+      setHasLoadedNotes(false);
+
+      try {
+        const databaseNotes = await fetchNotes(userId);
+        const nextNotes =
+          databaseNotes.length > 0
+            ? databaseNotes
+            : await Promise.all(
+                createStarterNotes().map((note) =>
+                  createNoteInDb(note, userId)
+                )
+              );
+
+        if (!isMounted) return;
+
+        setNotes(nextNotes);
+        setActiveNoteId(getActiveIdFromNotes(nextNotes, null));
+        setSyncError(null);
+      } catch (error) {
+        if (!isMounted) return;
+
+        setNotes([]);
         setActiveNoteId("");
+        setSyncError(getErrorMessage(error));
+      } finally {
+        if (!isMounted) return;
+
+        setIsLoadingNotes(false);
+        setHasLoadedNotes(true);
       }
     }
 
-    setHasLoadedStorage(true);
-  }, []);
-  /* eslint-enable react-hooks/set-state-in-effect */
+    loadUserNotes();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user, isCheckingAuth]);
 
   useEffect(() => {
-    if (!hasLoadedStorage) return;
+    if (!pendingNoteSave || !hasLoadedNotes || !user) return;
 
-    saveNotesToStorage(notes, activeNoteId);
-  }, [notes, activeNoteId, hasLoadedStorage]);
+    const timeoutId = window.setTimeout(() => {
+      updateNoteInDb(pendingNoteSave)
+        .then(() => {
+          setSyncError(null);
+        })
+        .catch((error: unknown) => {
+          setSyncError(getErrorMessage(error));
+        });
+    }, 600);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [pendingNoteSave, hasLoadedNotes, user]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -174,6 +316,34 @@ export default function Home() {
     };
   }, [createNote, openDailyNote]);
 
+  if (isCheckingAuth) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-neutral-950 p-6 text-neutral-400">
+        Checking account...
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <AuthScreen
+        onAuthSuccess={() => {
+          setIsCheckingAuth(true);
+          getCurrentUser()
+            .then((currentUser) => {
+              setUser(currentUser);
+            })
+            .catch((error: unknown) => {
+              setSyncError(getErrorMessage(error));
+            })
+            .finally(() => {
+              setIsCheckingAuth(false);
+            });
+        }}
+      />
+    );
+  }
+
   return (
     <AppShell>
       <Sidebar
@@ -183,16 +353,28 @@ export default function Home() {
         searchQuery={searchQuery}
         tags={allTags}
         activeTag={activeTag}
+        userEmail={user.email}
         onSearchChange={setSearchQuery}
         onCreateNote={createNote}
         onOpenDailyNote={openDailyNote}
         onSelectNote={setActiveNoteId}
         onSelectTag={setActiveTag}
         onClearTag={() => setActiveTag(null)}
+        onLogout={handleLogout}
       />
 
       <section className="flex flex-1 flex-col">
-        {activeNote ? (
+        {syncError && (
+          <div className="border-b border-yellow-900/60 bg-yellow-950/40 px-4 py-2 text-sm text-yellow-200">
+            {syncError}
+          </div>
+        )}
+
+        {isLoadingNotes ? (
+          <div className="flex flex-1 items-center justify-center p-6 text-neutral-400">
+            Loading notes...
+          </div>
+        ) : activeNote ? (
           <>
             <header className="border-b border-neutral-800 p-4">
               <div className="flex items-start justify-between gap-4">

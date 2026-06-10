@@ -3,6 +3,7 @@ export type Note = {
   title: string;
   content: string;
   updatedAt: string;
+  userId?: string;
 };
 
 export type ViewMode = "editor" | "preview";
