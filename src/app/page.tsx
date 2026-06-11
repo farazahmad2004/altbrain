@@ -1,6 +1,6 @@
 "use client"; // a directive to declare a boundary that turns a server-side file into a Client Component
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { AuthScreen } from "@/components/AuthScreen";
 import { AiChatPanel } from "@/components/AiChatPanel";
@@ -29,10 +29,13 @@ import {
   fetchNotes,
   updateNoteInDb,
 } from "@/lib/notes-api";
+import { clearAiSession } from "@/lib/ai-session";
 import { getCurrentUser, signOut } from "@/lib/auth-api";
 import { supabase } from "@/lib/supabase";
 import type { Note, ViewMode } from "@/types/note";
 import type { User } from "@supabase/supabase-js";
+
+const ACTIVE_NOTE_STORAGE_KEY = "altbrain-active-note-id";
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) {
@@ -53,15 +56,25 @@ function getActiveIdFromNotes(notes: Note[], preferredNoteId: string | null) {
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
-  const [activeNoteId, setActiveNoteId] = useState("");
+  const [activeNoteId, setActiveNoteId] = useState(() => {
+    if (typeof window === "undefined") {
+      return "";
+    }
+
+    return sessionStorage.getItem(ACTIVE_NOTE_STORAGE_KEY) ?? "";
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("editor");
   const [isLoadingNotes, setIsLoadingNotes] = useState(true);
+  const [isSyncingNotes, setIsSyncingNotes] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [hasLoadedNotes, setHasLoadedNotes] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [pendingNoteSave, setPendingNoteSave] = useState<Note | null>(null);
+  const [isAiOpen, setIsAiOpen] = useState(false);
+  const userRef = useRef<User | null>(null);
+  const notesRef = useRef<Note[]>([]);
 
   const activeNote = notes.find((note) => note.id === activeNoteId);
   const sortedNotes = [...notes].sort(
@@ -86,24 +99,34 @@ export default function Home() {
     ? getDetectedPageLinks(activeNote.content)
     : [];
 
+  const selectActiveNote = useCallback((noteId: string) => {
+    setActiveNoteId(noteId);
+
+    if (noteId) {
+      sessionStorage.setItem(ACTIVE_NOTE_STORAGE_KEY, noteId);
+    } else {
+      sessionStorage.removeItem(ACTIVE_NOTE_STORAGE_KEY);
+    }
+  }, []);
+
   const openOrCreatePageLink = useCallback((pageTitle: string) => {
     if (!user) return;
 
     const existingNote = findNoteByTitle(notes, pageTitle);
 
     if (existingNote) {
-      setActiveNoteId(existingNote.id);
+      selectActiveNote(existingNote.id);
       return;
     }
 
     const newNote = createNoteWithTitle(pageTitle);
 
     setNotes((prevNotes) => [newNote, ...prevNotes]);
-    setActiveNoteId(newNote.id);
+    selectActiveNote(newNote.id);
     createNoteInDb(newNote, user.id).catch((error: unknown) => {
       setSyncError(getErrorMessage(error));
     });
-  }, [notes, user]);
+  }, [notes, selectActiveNote, user]);
 
   const openDailyNote = useCallback(() => {
     if (!user) return;
@@ -112,18 +135,18 @@ export default function Home() {
     const existingNote = findNoteByTitle(notes, todayTitle);
 
     if (existingNote) {
-      setActiveNoteId(existingNote.id);
+      selectActiveNote(existingNote.id);
       return;
     }
 
     const newNote = createDailyNote(todayTitle);
 
     setNotes((prevNotes) => [newNote, ...prevNotes]);
-    setActiveNoteId(newNote.id);
+    selectActiveNote(newNote.id);
     createNoteInDb(newNote, user.id).catch((error: unknown) => {
       setSyncError(getErrorMessage(error));
     });
-  }, [notes, user]);
+  }, [notes, selectActiveNote, user]);
 
   const createNote = useCallback(() => {
     if (!user) return;
@@ -131,11 +154,11 @@ export default function Home() {
     const newNote = createEmptyNote();
 
     setNotes((prevNotes) => [newNote, ...prevNotes]);
-    setActiveNoteId(newNote.id);
+    selectActiveNote(newNote.id);
     createNoteInDb(newNote, user.id).catch((error: unknown) => {
       setSyncError(getErrorMessage(error));
     });
-  }, [user]);
+  }, [selectActiveNote, user]);
 
   function updateActiveNote(field: "title" | "content", value: string) {
     if (!activeNote) return;
@@ -161,9 +184,9 @@ export default function Home() {
     setNotes(remainingNotes);
 
     if (remainingNotes.length > 0) {
-      setActiveNoteId(remainingNotes[0].id);
+      selectActiveNote(remainingNotes[0].id);
     } else {
-      setActiveNoteId("");
+      selectActiveNote("");
     }
 
     deleteNoteFromDb(activeNote.id).catch((error: unknown) => {
@@ -176,14 +199,23 @@ export default function Home() {
       await signOut();
       setUser(null);
       setNotes([]);
-      setActiveNoteId("");
+      selectActiveNote("");
       setPendingNoteSave(null);
       setHasLoadedNotes(false);
       setSyncError(null);
+      clearAiSession();
     } catch (error) {
       setSyncError(getErrorMessage(error));
     }
   }
+
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
+  useEffect(() => {
+    notesRef.current = notes;
+  }, [notes]);
 
   useEffect(() => {
     let isMounted = true;
@@ -211,21 +243,39 @@ export default function Home() {
 
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       const nextUser = session?.user ?? null;
+      const currentUser = userRef.current;
+      const currentUserId = currentUser?.id ?? null;
+      const nextUserId = nextUser?.id ?? null;
+
+      if (currentUserId === nextUserId) {
+        setUser(nextUser);
+        return;
+      }
 
       setUser(nextUser);
-      setNotes([]);
-      setActiveNoteId("");
       setPendingNoteSave(null);
-      setHasLoadedNotes(false);
-      setIsLoadingNotes(Boolean(nextUser));
       setSyncError(null);
+
+      if (!nextUser) {
+        setNotes([]);
+        selectActiveNote("");
+        setHasLoadedNotes(false);
+        setIsLoadingNotes(false);
+        clearAiSession();
+        return;
+      }
+
+      setNotes([]);
+      selectActiveNote("");
+      setHasLoadedNotes(false);
+      setIsLoadingNotes(true);
     });
 
     return () => {
       isMounted = false;
       data.subscription.unsubscribe();
     };
-  }, []);
+  }, [selectActiveNote]);
 
   useEffect(() => {
     if (isCheckingAuth || !user) return;
@@ -234,7 +284,10 @@ export default function Home() {
     const userId = user.id;
 
     async function loadUserNotes() {
-      setIsLoadingNotes(true);
+      const hasExistingNotes = notesRef.current.length > 0;
+
+      setIsLoadingNotes(!hasExistingNotes);
+      setIsSyncingNotes(hasExistingNotes);
       setHasLoadedNotes(false);
 
       try {
@@ -251,18 +304,21 @@ export default function Home() {
         if (!isMounted) return;
 
         setNotes(nextNotes);
-        setActiveNoteId(getActiveIdFromNotes(nextNotes, null));
+        const savedActiveNoteId =
+          sessionStorage.getItem(ACTIVE_NOTE_STORAGE_KEY) ?? null;
+        selectActiveNote(getActiveIdFromNotes(nextNotes, savedActiveNoteId));
         setSyncError(null);
       } catch (error) {
         if (!isMounted) return;
 
         setNotes([]);
-        setActiveNoteId("");
+        selectActiveNote("");
         setSyncError(getErrorMessage(error));
       } finally {
         if (!isMounted) return;
 
         setIsLoadingNotes(false);
+        setIsSyncingNotes(false);
         setHasLoadedNotes(true);
       }
     }
@@ -272,7 +328,7 @@ export default function Home() {
     return () => {
       isMounted = false;
     };
-  }, [user, isCheckingAuth]);
+  }, [user, isCheckingAuth, selectActiveNote]);
 
   useEffect(() => {
     if (!pendingNoteSave || !hasLoadedNotes || !user) return;
@@ -360,7 +416,7 @@ export default function Home() {
         onSearchChange={setSearchQuery}
         onCreateNote={createNote}
         onOpenDailyNote={openDailyNote}
-        onSelectNote={setActiveNoteId}
+        onSelectNote={selectActiveNote}
         onSelectTag={setActiveTag}
         onClearTag={() => setActiveTag(null)}
         onLogout={handleLogout}
@@ -373,7 +429,13 @@ export default function Home() {
           </div>
         )}
 
-        {isLoadingNotes ? (
+        {isSyncingNotes && (
+          <div className="border-b border-neutral-800 px-4 py-2 text-xs text-neutral-500">
+            Syncing notes...
+          </div>
+        )}
+
+        {isLoadingNotes && notes.length === 0 ? (
           <div className="flex flex-1 items-center justify-center p-6 text-neutral-400">
             Loading notes...
           </div>
@@ -398,12 +460,21 @@ export default function Home() {
                   />
                 </div>
 
-                <button
-                  onClick={deleteActiveNote}
-                  className="rounded-lg border border-red-500 px-3 py-2 text-sm text-red-400 hover:bg-red-950"
-                >
-                  Delete
-                </button>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <button
+                    onClick={() => setIsAiOpen(true)}
+                    className="rounded-lg bg-white px-3 py-2 text-sm font-medium text-neutral-950 hover:bg-neutral-200"
+                  >
+                    Ask AltBrain AI
+                  </button>
+
+                  <button
+                    onClick={deleteActiveNote}
+                    className="rounded-lg border border-red-500 px-3 py-2 text-sm text-red-400 hover:bg-red-950"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
 
               <div className="mt-4 grid grid-cols-2 rounded-lg border border-neutral-800 p-1 md:hidden">
@@ -449,18 +520,30 @@ export default function Home() {
 
             <Backlinks
               backlinks={activeBacklinks}
-              onSelectNote={setActiveNoteId}
+              onSelectNote={selectActiveNote}
             />
-
-            <AiChatPanel notes={notes} />
           </>
         ) : (
           <>
+            <header className="flex items-center justify-end border-b border-neutral-800 p-4">
+              <button
+                onClick={() => setIsAiOpen(true)}
+                className="rounded-lg bg-white px-3 py-2 text-sm font-medium text-neutral-950 hover:bg-neutral-200"
+              >
+                Ask AltBrain AI
+              </button>
+            </header>
+
             <EmptyState onCreateNote={createNote} />
-            <AiChatPanel notes={notes} />
           </>
         )}
       </section>
+
+      <AiChatPanel
+        notes={notes}
+        isOpen={isAiOpen}
+        onClose={() => setIsAiOpen(false)}
+      />
     </AppShell>
   );
 }

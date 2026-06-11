@@ -2,12 +2,22 @@
 
 import { useEffect, useState } from "react";
 import { selectRelevantNotes, type SourceNote } from "@/lib/ai-context";
+import {
+  AI_ANSWER_STORAGE_KEY,
+  AI_KEY_MODE_STORAGE_KEY,
+  AI_QUESTION_STORAGE_KEY,
+  USER_GEMINI_KEY_STORAGE_KEY,
+  loadAiSession,
+  saveAiSources,
+} from "@/lib/ai-session";
 import type { Note } from "@/types/note";
 
 type ApiKeyMode = "configured" | "user";
 
 type AiChatPanelProps = {
   notes: Note[];
+  isOpen: boolean;
+  onClose: () => void;
 };
 
 type ChatResponse = {
@@ -15,22 +25,35 @@ type ChatResponse = {
   error?: string;
 };
 
-const USER_GEMINI_KEY_STORAGE_KEY = "altbrain-user-gemini-key";
-
-export function AiChatPanel({ notes }: AiChatPanelProps) {
-  const [question, setQuestion] = useState("");
-  const [apiKeyMode, setApiKeyMode] = useState<ApiKeyMode>("configured");
-  const [userApiKey, setUserApiKey] = useState(() => {
-    if (typeof window === "undefined") {
-      return "";
-    }
-
-    return sessionStorage.getItem(USER_GEMINI_KEY_STORAGE_KEY) ?? "";
-  });
-  const [answer, setAnswer] = useState("");
-  const [selectedSources, setSelectedSources] = useState<SourceNote[]>([]);
+export function AiChatPanel({ notes, isOpen, onClose }: AiChatPanelProps) {
+  const savedSession = loadAiSession();
+  const [question, setQuestion] = useState(savedSession.question);
+  const [apiKeyMode, setApiKeyMode] = useState<ApiKeyMode>(
+    savedSession.apiKeyMode
+  );
+  const [userApiKey, setUserApiKey] = useState(savedSession.userApiKey);
+  const [answer, setAnswer] = useState(savedSession.answer);
+  const [selectedSources, setSelectedSources] = useState<SourceNote[]>(
+    savedSession.sourceIds.map((id, index) => ({
+      id,
+      title: savedSession.sourceTitles[index] ?? "Untitled Note",
+      content: "",
+    }))
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    sessionStorage.setItem(AI_QUESTION_STORAGE_KEY, question);
+  }, [question]);
+
+  useEffect(() => {
+    sessionStorage.setItem(AI_ANSWER_STORAGE_KEY, answer);
+  }, [answer]);
+
+  useEffect(() => {
+    sessionStorage.setItem(AI_KEY_MODE_STORAGE_KEY, apiKeyMode);
+  }, [apiKeyMode]);
 
   useEffect(() => {
     if (userApiKey.trim()) {
@@ -61,6 +84,7 @@ export function AiChatPanel({ notes }: AiChatPanelProps) {
 
     const sources = selectRelevantNotes(trimmedQuestion, notes, 5);
     setSelectedSources(sources);
+    saveAiSources(sources);
     setIsLoading(true);
     setAnswer("");
 
@@ -96,39 +120,62 @@ export function AiChatPanel({ notes }: AiChatPanelProps) {
     }
   }
 
-  return (
-    <section className="border-t border-neutral-800 bg-neutral-950 p-4">
-      <div className="mb-3">
-        <h2 className="text-sm font-semibold text-neutral-100">
-          Ask AltBrain
-        </h2>
-        <p className="mt-1 text-xs text-neutral-400">
-          Ask a question using your notes as context.
-        </p>
-      </div>
+  function clearAnswer() {
+    setQuestion("");
+    setAnswer("");
+    setSelectedSources([]);
+    setErrorMessage(null);
+    sessionStorage.removeItem(AI_QUESTION_STORAGE_KEY);
+    sessionStorage.removeItem(AI_ANSWER_STORAGE_KEY);
+    saveAiSources([]);
+  }
 
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_18rem]">
-        <div>
+  return (
+    <div
+      className={`fixed inset-0 z-40 ${
+        isOpen ? "pointer-events-auto" : "pointer-events-none"
+      }`}
+      aria-hidden={!isOpen}
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        className={`absolute inset-0 bg-black/50 transition-opacity ${
+          isOpen ? "opacity-100" : "opacity-0"
+        }`}
+        aria-label="Close Ask AltBrain"
+      />
+
+      <aside
+        className={`absolute right-0 top-0 flex h-full w-full flex-col border-l border-neutral-800 bg-neutral-950 text-neutral-100 shadow-2xl transition-transform sm:w-[460px] lg:w-[520px] ${
+          isOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <header className="flex items-start justify-between border-b border-neutral-800 p-4">
+          <div>
+            <h2 className="text-lg font-semibold">Ask AltBrain</h2>
+            <p className="mt-1 text-sm text-neutral-400">
+              Ask questions using your notes as context.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border border-neutral-800 px-3 py-1.5 text-sm text-neutral-300 hover:bg-neutral-800"
+          >
+            Close
+          </button>
+        </header>
+
+        <div className="flex-1 space-y-4 overflow-auto p-4">
           <textarea
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
             placeholder="What do my notes say about..."
-            className="h-24 w-full resize-none rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm leading-6 text-neutral-100 outline-none placeholder:text-neutral-500 focus:border-neutral-600"
+            className="h-28 w-full resize-none rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm leading-6 text-neutral-100 outline-none placeholder:text-neutral-500 focus:border-neutral-600"
           />
 
-          {answer && (
-            <div className="mt-3 rounded-lg border border-neutral-800 bg-neutral-900 p-3">
-              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                Answer
-              </div>
-              <p className="whitespace-pre-wrap text-sm leading-6 text-neutral-200">
-                {answer}
-              </p>
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-3">
           <div className="grid grid-cols-2 rounded-lg border border-neutral-800 p-1">
             <button
               type="button"
@@ -188,20 +235,27 @@ export function AiChatPanel({ notes }: AiChatPanelProps) {
               {isLoading ? "Thinking..." : "Ask"}
             </button>
 
-            {(answer || selectedSources.length > 0) && (
+            {(answer || selectedSources.length > 0 || question) && (
               <button
                 type="button"
-                onClick={() => {
-                  setAnswer("");
-                  setSelectedSources([]);
-                  setErrorMessage(null);
-                }}
+                onClick={clearAnswer}
                 className="rounded-lg border border-neutral-700 px-4 py-2 text-sm text-neutral-300 hover:bg-neutral-800"
               >
                 Clear
               </button>
             )}
           </div>
+
+          {answer && (
+            <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-3">
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                Answer
+              </div>
+              <p className="whitespace-pre-wrap text-sm leading-6 text-neutral-200">
+                {answer}
+              </p>
+            </div>
+          )}
 
           {selectedSources.length > 0 && (
             <div>
@@ -221,7 +275,7 @@ export function AiChatPanel({ notes }: AiChatPanelProps) {
             </div>
           )}
         </div>
-      </div>
-    </section>
+      </aside>
+    </div>
   );
 }
