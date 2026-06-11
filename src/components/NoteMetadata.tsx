@@ -34,7 +34,7 @@ export function NoteMetadata({
             <button
               key={pageLink}
               onClick={() => onOpenPageLink(pageLink)}
-              className="rounded-md bg-neutral-800 px-2 py-1 text-xs text-neutral-300 hover:bg-neutral-700"
+              className="cursor-pointer rounded-full bg-neutral-800 px-2.5 py-1 text-xs text-neutral-300 transition-colors hover:bg-neutral-700 hover:text-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-700"
             >
               [[{pageLink}]]
             </button>

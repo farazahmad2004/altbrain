@@ -18,10 +18,10 @@ export function NoteList({
         <button
           key={note.id}
           onClick={() => onSelectNote(note.id)}
-          className={`w-full rounded-lg border px-3 py-2.5 text-left ${
+          className={`w-full cursor-pointer rounded-xl border px-3 py-2.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-700 ${
             note.id === activeNoteId
-              ? "border-neutral-500 bg-neutral-800"
-              : "border-neutral-800 bg-neutral-950 hover:bg-neutral-800"
+              ? "border-neutral-500 bg-neutral-800 shadow-sm"
+              : "border-neutral-800 bg-neutral-950 hover:border-neutral-700 hover:bg-neutral-800"
           }`}
         >
           <div className="truncate text-sm font-medium text-neutral-100">

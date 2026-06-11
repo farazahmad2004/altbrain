@@ -35,7 +35,7 @@ export function MarkdownPreview({
                 <button
                   type="button"
                   onClick={() => onOpenPageLink(pageTitle)}
-                  className="font-medium text-neutral-100 underline decoration-neutral-500 underline-offset-4 hover:decoration-neutral-200"
+                  className="cursor-pointer rounded-sm font-medium text-neutral-100 underline decoration-neutral-500 underline-offset-4 transition-colors hover:decoration-neutral-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-700"
                 >
                   {children}
                 </button>

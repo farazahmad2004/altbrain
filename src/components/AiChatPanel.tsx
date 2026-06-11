@@ -140,7 +140,7 @@ export function AiChatPanel({ notes, isOpen, onClose }: AiChatPanelProps) {
       <button
         type="button"
         onClick={onClose}
-        className={`absolute inset-0 bg-black/50 transition-opacity ${
+        className={`absolute inset-0 cursor-pointer bg-black/50 transition-opacity ${
           isOpen ? "opacity-100" : "opacity-0"
         }`}
         aria-label="Close Ask AltBrain"
@@ -162,7 +162,7 @@ export function AiChatPanel({ notes, isOpen, onClose }: AiChatPanelProps) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-neutral-800 px-3 py-1.5 text-sm text-neutral-300 hover:bg-neutral-800"
+            className="cursor-pointer rounded-full border border-neutral-700 px-3 py-1.5 text-sm text-neutral-300 transition-colors hover:border-neutral-600 hover:bg-neutral-800 hover:text-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-600"
           >
             Close
           </button>
@@ -173,17 +173,17 @@ export function AiChatPanel({ notes, isOpen, onClose }: AiChatPanelProps) {
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
             placeholder="What do my notes say about..."
-            className="h-28 w-full resize-none rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm leading-6 text-neutral-100 outline-none placeholder:text-neutral-500 focus:border-neutral-600"
+            className="h-28 w-full resize-none rounded-xl border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm leading-6 text-neutral-100 outline-none transition-colors placeholder:text-neutral-500 focus:border-neutral-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-700"
           />
 
-          <div className="grid grid-cols-2 rounded-lg border border-neutral-800 p-1">
+          <div className="grid grid-cols-2 rounded-full border border-neutral-800 bg-neutral-900 p-1">
             <button
               type="button"
               onClick={() => setApiKeyMode("configured")}
-              className={`rounded-md px-3 py-2 text-xs ${
+              className={`cursor-pointer rounded-full px-3 py-2 text-xs font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-600 ${
                 apiKeyMode === "configured"
-                  ? "bg-neutral-700 text-white"
-                  : "text-neutral-400"
+                  ? "bg-neutral-100 text-neutral-950"
+                  : "text-neutral-400 hover:bg-neutral-800 hover:text-neutral-100"
               }`}
             >
               Use AltBrain key
@@ -192,10 +192,10 @@ export function AiChatPanel({ notes, isOpen, onClose }: AiChatPanelProps) {
             <button
               type="button"
               onClick={() => setApiKeyMode("user")}
-              className={`rounded-md px-3 py-2 text-xs ${
+              className={`cursor-pointer rounded-full px-3 py-2 text-xs font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-600 ${
                 apiKeyMode === "user"
-                  ? "bg-neutral-700 text-white"
-                  : "text-neutral-400"
+                  ? "bg-neutral-100 text-neutral-950"
+                  : "text-neutral-400 hover:bg-neutral-800 hover:text-neutral-100"
               }`}
             >
               Use my Gemini API key
@@ -209,7 +209,7 @@ export function AiChatPanel({ notes, isOpen, onClose }: AiChatPanelProps) {
                 onChange={(event) => setUserApiKey(event.target.value)}
                 type="password"
                 placeholder="Gemini API key"
-                className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 outline-none placeholder:text-neutral-500 focus:border-neutral-600"
+                className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 outline-none transition-colors placeholder:text-neutral-500 focus:border-neutral-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-700"
               />
               <p className="mt-2 text-xs leading-5 text-neutral-500">
                 Your key is used only for this request/session and is not saved
@@ -230,7 +230,7 @@ export function AiChatPanel({ notes, isOpen, onClose }: AiChatPanelProps) {
               type="button"
               onClick={handleSubmit}
               disabled={isLoading}
-              className="flex-1 rounded-lg bg-white px-4 py-2 text-sm font-medium text-neutral-950 hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-70"
+              className="flex-1 cursor-pointer rounded-full bg-white px-4 py-2 text-sm font-medium text-neutral-950 transition-colors hover:bg-neutral-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {isLoading ? "Thinking..." : "Ask"}
             </button>
@@ -239,7 +239,7 @@ export function AiChatPanel({ notes, isOpen, onClose }: AiChatPanelProps) {
               <button
                 type="button"
                 onClick={clearAnswer}
-                className="rounded-lg border border-neutral-700 px-4 py-2 text-sm text-neutral-300 hover:bg-neutral-800"
+                className="cursor-pointer rounded-full border border-neutral-700 px-4 py-2 text-sm text-neutral-300 transition-colors hover:border-neutral-600 hover:bg-neutral-800 hover:text-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-600"
               >
                 Clear
               </button>

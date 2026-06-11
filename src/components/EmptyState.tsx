@@ -12,7 +12,7 @@ export function EmptyState({ onCreateNote }: EmptyStateProps) {
 
         <button
           onClick={onCreateNote}
-          className="rounded-lg bg-white px-4 py-2 font-medium text-neutral-950 hover:bg-neutral-200"
+          className="cursor-pointer rounded-full bg-white px-4 py-2 font-medium text-neutral-950 transition-colors hover:bg-neutral-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400"
         >
           Create your first note
         </button>

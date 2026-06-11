@@ -70,7 +70,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
               setPassword("");
               setErrorMessage(null);
             }}
-            className="mt-6 w-full rounded-lg bg-white px-4 py-2 font-medium text-neutral-950 hover:bg-neutral-200"
+            className="mt-6 w-full cursor-pointer rounded-full bg-white px-4 py-2 font-medium text-neutral-950 transition-colors hover:bg-neutral-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400"
           >
             Back to login
           </button>
@@ -90,17 +90,17 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
           </p>
         </div>
 
-        <div className="mb-4 grid grid-cols-2 rounded-lg border border-neutral-800 p-1">
+        <div className="mb-4 grid grid-cols-2 rounded-full border border-neutral-800 bg-neutral-950 p-1">
           <button
             type="button"
             onClick={() => {
               setMode("login");
               setErrorMessage(null);
             }}
-            className={`rounded-md px-3 py-2 text-sm ${
+            className={`cursor-pointer rounded-full px-3 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-600 ${
               mode === "login"
-                ? "bg-neutral-700 text-white"
-                : "text-neutral-400"
+                ? "bg-neutral-100 text-neutral-950"
+                : "text-neutral-400 hover:bg-neutral-800 hover:text-neutral-100"
             }`}
           >
             Login
@@ -112,10 +112,10 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
               setMode("signup");
               setErrorMessage(null);
             }}
-            className={`rounded-md px-3 py-2 text-sm ${
+            className={`cursor-pointer rounded-full px-3 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-600 ${
               mode === "signup"
-                ? "bg-neutral-700 text-white"
-                : "text-neutral-400"
+                ? "bg-neutral-100 text-neutral-950"
+                : "text-neutral-400 hover:bg-neutral-800 hover:text-neutral-100"
             }`}
           >
             Sign up
@@ -129,7 +129,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
             type="email"
             placeholder="Email"
             required
-            className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm outline-none placeholder:text-neutral-500 focus:border-neutral-500"
+            className="w-full rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm outline-none transition-colors placeholder:text-neutral-500 focus:border-neutral-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-700"
           />
 
           <input
@@ -138,7 +138,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
             type="password"
             placeholder="Password"
             required
-            className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm outline-none placeholder:text-neutral-500 focus:border-neutral-500"
+            className="w-full rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm outline-none transition-colors placeholder:text-neutral-500 focus:border-neutral-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-700"
           />
 
           {errorMessage && (
@@ -150,7 +150,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full rounded-lg bg-white px-4 py-2 font-medium text-neutral-950 hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-70"
+            className="w-full cursor-pointer rounded-full bg-white px-4 py-2 font-medium text-neutral-950 transition-colors hover:bg-neutral-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {isLoading
               ? "Please wait..."

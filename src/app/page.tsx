@@ -450,7 +450,7 @@ export default function Home() {
                     onChange={(event) =>
                       updateActiveNote("title", event.target.value)
                     }
-                    className="w-full bg-transparent text-2xl font-semibold outline-none"
+                    className="w-full rounded-lg bg-transparent text-2xl font-semibold outline-none transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-800"
                   />
 
                   <NoteMetadata
@@ -463,14 +463,16 @@ export default function Home() {
                 <div className="flex shrink-0 flex-wrap gap-2">
                   <button
                     onClick={() => setIsAiOpen(true)}
-                    className="rounded-lg bg-white px-3 py-2 text-sm font-medium text-neutral-950 hover:bg-neutral-200"
+                    aria-label="Open Ask AltBrain AI"
+                    className="cursor-pointer rounded-full bg-white px-4 py-2 text-sm font-medium text-neutral-950 transition-colors hover:bg-neutral-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400"
                   >
                     Ask AltBrain AI
                   </button>
 
                   <button
                     onClick={deleteActiveNote}
-                    className="rounded-lg border border-red-500 px-3 py-2 text-sm text-red-400 hover:bg-red-950"
+                    aria-label="Delete active note"
+                    className="cursor-pointer rounded-full border border-red-900/70 px-4 py-2 text-sm font-medium text-red-300 transition-colors hover:bg-red-950/70 hover:text-red-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-800"
                   >
                     Delete
                   </button>
@@ -480,10 +482,10 @@ export default function Home() {
               <div className="mt-4 grid grid-cols-2 rounded-lg border border-neutral-800 p-1 md:hidden">
                 <button
                   onClick={() => setViewMode("editor")}
-                  className={`rounded-md px-3 py-2 text-sm ${
+                  className={`cursor-pointer rounded-md px-3 py-2 text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-700 ${
                     viewMode === "editor"
                       ? "bg-neutral-700 text-white"
-                      : "text-neutral-400"
+                      : "text-neutral-400 hover:bg-neutral-800 hover:text-neutral-100"
                   }`}
                 >
                   Editor
@@ -491,10 +493,10 @@ export default function Home() {
 
                 <button
                   onClick={() => setViewMode("preview")}
-                  className={`rounded-md px-3 py-2 text-sm ${
+                  className={`cursor-pointer rounded-md px-3 py-2 text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-700 ${
                     viewMode === "preview"
                       ? "bg-neutral-700 text-white"
-                      : "text-neutral-400"
+                      : "text-neutral-400 hover:bg-neutral-800 hover:text-neutral-100"
                   }`}
                 >
                   Preview
@@ -528,7 +530,8 @@ export default function Home() {
             <header className="flex items-center justify-end border-b border-neutral-800 p-4">
               <button
                 onClick={() => setIsAiOpen(true)}
-                className="rounded-lg bg-white px-3 py-2 text-sm font-medium text-neutral-950 hover:bg-neutral-200"
+                aria-label="Open Ask AltBrain AI"
+                className="cursor-pointer rounded-full bg-white px-4 py-2 text-sm font-medium text-neutral-950 transition-colors hover:bg-neutral-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400"
               >
                 Ask AltBrain AI
               </button>

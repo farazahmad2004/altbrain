@@ -43,9 +43,9 @@ export function Sidebar({
         </p>
       </div>
 
-      <div className="mb-5 rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-3">
+      <div className="mb-6 rounded-xl border border-neutral-800 bg-neutral-950 px-3 py-3">
         <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-          Account
+          ACCOUNT
         </div>
 
         {userEmail && (
@@ -56,27 +56,27 @@ export function Sidebar({
 
         <button
           onClick={onLogout}
-          className="text-sm text-neutral-300 hover:text-white"
+          className="cursor-pointer rounded-full border border-red-900/60 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-950/70 hover:text-red-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-800"
         >
           Logout
         </button>
       </div>
 
       <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-        Actions
+        ACTIONS
       </div>
 
-      <div className="mb-4 grid grid-cols-2 gap-2">
+      <div className="mb-5 grid grid-cols-2 gap-2">
         <button
           onClick={onCreateNote}
-          className="rounded-lg bg-white px-3 py-2 text-sm font-medium text-neutral-950 hover:bg-neutral-200"
+          className="cursor-pointer rounded-full bg-white px-3 py-2 text-sm font-medium text-neutral-950 transition-colors hover:bg-neutral-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400"
         >
           + New Note
         </button>
 
         <button
           onClick={onOpenDailyNote}
-          className="rounded-lg border border-neutral-700 px-3 py-2 text-sm font-medium text-neutral-100 hover:bg-neutral-800"
+          className="cursor-pointer rounded-full border border-neutral-700 px-3 py-2 text-sm font-medium text-neutral-100 transition-colors hover:border-neutral-600 hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-600"
         >
           Daily Note
         </button>
@@ -86,20 +86,20 @@ export function Sidebar({
         value={searchQuery}
         onChange={(event) => onSearchChange(event.target.value)}
         placeholder="Search notes..."
-        className="mb-4 w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 outline-none placeholder:text-neutral-500 focus:border-neutral-500"
+        className="mb-5 w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 outline-none transition-colors placeholder:text-neutral-500 focus:border-neutral-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-700"
       />
 
       {tags.length > 0 && (
         <div className="mb-5">
           <div className="mb-2 flex items-center justify-between">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-              Tags
+              TAGS
             </h2>
 
             {activeTag && (
               <button
                 onClick={onClearTag}
-                className="text-xs text-neutral-400 hover:text-neutral-100"
+                className="cursor-pointer rounded-full px-2 py-1 text-xs text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-700"
               >
                 Clear
               </button>
@@ -111,10 +111,10 @@ export function Sidebar({
               <button
                 key={tag}
                 onClick={() => onSelectTag(tag)}
-                className={`rounded-md border px-2 py-1 text-xs ${
+                className={`cursor-pointer rounded-full border px-2.5 py-1 text-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-700 ${
                   activeTag === tag
                     ? "border-neutral-300 bg-neutral-100 text-neutral-950"
-                    : "border-neutral-700 text-neutral-300 hover:bg-neutral-800"
+                    : "border-neutral-700 text-neutral-300 hover:border-neutral-600 hover:bg-neutral-800"
                 }`}
               >
                 #{tag}
@@ -125,7 +125,7 @@ export function Sidebar({
       )}
 
       <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-        Notes
+        NOTES
       </div>
 
       {filteredNotes.length > 0 ? (

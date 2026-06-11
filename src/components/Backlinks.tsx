@@ -22,7 +22,7 @@ export function Backlinks({ backlinks, onSelectNote }: BacklinksProps) {
           <button
             key={note.id}
             onClick={() => onSelectNote(note.id)}
-            className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-left hover:bg-neutral-800"
+            className="w-full cursor-pointer rounded-xl border border-neutral-800 bg-neutral-900 px-3 py-2 text-left transition-colors hover:border-neutral-700 hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-700"
           >
             <div className="truncate text-sm font-medium text-neutral-100">
               {note.title}
