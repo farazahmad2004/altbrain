@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { AuthScreen } from "@/components/AuthScreen";
+import { AiChatPanel } from "@/components/AiChatPanel";
 import { Backlinks } from "@/components/Backlinks";
 import { EmptyState } from "@/components/EmptyState";
 import { MarkdownPreview } from "@/components/MarkdownPreview";
@@ -450,9 +451,14 @@ export default function Home() {
               backlinks={activeBacklinks}
               onSelectNote={setActiveNoteId}
             />
+
+            <AiChatPanel notes={notes} />
           </>
         ) : (
-          <EmptyState onCreateNote={createNote} />
+          <>
+            <EmptyState onCreateNote={createNote} />
+            <AiChatPanel notes={notes} />
+          </>
         )}
       </section>
     </AppShell>
